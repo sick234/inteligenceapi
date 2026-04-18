@@ -1,0 +1,53 @@
+[project]
+name = "document-intelligence-api"
+version = "1.0.0"
+description = "A scalable RESTful API for AI-powered document analysis. Upload PDFs or text files and get intelligent summaries powered by Groq (Llama 3)."
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "Alex Developer"}
+]
+keywords = ["fastapi", "ai", "document-analysis", "celery", "groq", "llama3"]
+
+dependencies = [
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.29.0",
+    "sqlalchemy>=2.0.28",
+    "asyncpg>=0.29.0",
+    "alembic>=1.13.1",
+    "pydantic[email]>=2.6.4",
+    "pydantic-settings>=2.2.1",
+    "celery>=5.3.6",
+    "redis>=5.0.3",
+    "python-multipart>=0.0.9",
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[bcrypt]>=1.7.4",
+    "bcrypt==3.2.2",
+    "groq>=0.4.2",
+    "PyMuPDF>=1.24.1",
+    "python-dotenv>=1.0.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.1.1",
+    "pytest-asyncio>=0.23.5",
+    "httpx>=0.27.0",
+    "ruff>=0.3.4",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
