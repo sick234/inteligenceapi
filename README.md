@@ -1,22 +1,44 @@
-# 🔍 Document Intelligence API
-
 <div align="center">
 
-![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?style=for-the-badge&logo=fastapi&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
-![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=for-the-badge&logo=redis&logoColor=white)
-![Celery](https://img.shields.io/badge/Celery-5.3-37814A?style=for-the-badge&logo=celery&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-![CI](https://img.shields.io/badge/CI-GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)
+# 🔍 Document Intelligence API
 
-**A production-ready, scalable RESTful API for AI-powered document analysis.**
+### _Upload a PDF. Get an AI summary. Zero blocking._
 
-Upload PDFs or plain text files, extract content automatically, and get intelligent summaries powered by **Groq (Llama 3)** — all processed asynchronously in the background.
+[![CI Pipeline](https://github.com/sick234/inteligenceapi/actions/workflows/ci.yml/badge.svg)](https://github.com/sick234/inteligenceapi/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Redis](https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white)](https://redis.io/)
+[![Celery](https://img.shields.io/badge/Celery-5.3-37814A?logo=celery&logoColor=white)](https://docs.celeryq.dev/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
-[Quick Start](#-quick-start) · [API Docs](#-api-endpoints) · [Architecture](#-architecture) · [Contributing](#-development)
+**A production-grade RESTful API for AI-powered document analysis.**
+Built with FastAPI, Celery, PostgreSQL, Redis and Groq (Llama 3).
+Async by default. Secure by design. Dockerised end-to-end.
+
+[🚀 Quick Start](#-quick-start) · [📡 API](#-api-endpoints) · [🏗️ Architecture](#%EF%B8%8F-architecture) · [🔐 Security](#-security-hardening) · [🧪 Dev](#-development)
 
 </div>
+
+---
+
+## 📚 Table of Contents
+
+- [Key Features](#-key-features)
+- [Architecture](#%EF%B8%8F-architecture)
+- [Processing Flow](#-processing-flow)
+- [Data Model](#-data-model)
+- [Quick Start](#-quick-start)
+- [API Endpoints](#-api-endpoints)
+- [Usage Example](#-usage-example)
+- [Security Hardening](#-security-hardening)
+- [Project Structure](#-project-structure)
+- [Tech Stack](#%EF%B8%8F-tech-stack)
+- [Development](#-development)
+- [CI / CD](#-ci--cd)
+- [License](#-license)
 
 ---
 
@@ -24,251 +46,366 @@ Upload PDFs or plain text files, extract content automatically, and get intellig
 
 | Feature | Description |
 |---------|-------------|
-| 🔐 **JWT Authentication** | Secure registration/login with bcrypt password hashing and strength validation |
-| 📄 **Document Upload** | PDF and plain text support with file size validation (configurable limit) |
-| 🤖 **AI Summarization** | Automatic text extraction + intelligent summarization via Groq (Llama 3) |
-| ⚡ **Async Processing** | Celery workers handle AI tasks in the background — API never blocks |
-| 📊 **Document Analytics** | Word count, page count, processing time metrics per document |
-| 📈 **Stats Dashboard** | Aggregated statistics endpoint for all your documents |
-| 📄 **Pagination** | All list endpoints support pagination with metadata |
-| 🗑️ **Full CRUD** | Upload, list, view, and delete documents |
-| 🏥 **Health Checks** | `/health` endpoint verifying DB + Redis connectivity |
-| 🔍 **Request Tracing** | Unique `X-Request-ID` on every request for distributed tracing |
-| 📝 **Structured Logging** | Formatted logs with request IDs, timing, and severity levels |
-| 🐳 **Fully Dockerized** | Multi-stage build, non-root user, one-command startup |
-| 🌸 **Worker Monitoring** | Celery Flower dashboard for real-time task monitoring |
-| 🧪 **CI/CD Pipeline** | GitHub Actions with lint, test, and Docker build stages |
-| ⚙️ **Error Handling** | Standardized error responses with consistent JSON format |
+| 🔐 **JWT Authentication** | Secure register/login, bcrypt hashing, password strength validation |
+| 📄 **Smart Upload** | PDF + plain text, streamed to disk in 1 MiB chunks with DoS-safe size limits |
+| 🧪 **Magic-byte Sniffing** | Never trusts the `Content-Type` header — real file signature is verified |
+| 🛡️ **Path-Traversal Proof** | UUID-based storage + resolved-path containment check |
+| 🤖 **AI Summarisation** | Groq (Llama 3) summaries generated asynchronously — API never blocks |
+| ⚡ **Async Workers** | Celery background pipeline: extract → analyse → summarise → persist |
+| 📊 **Analytics** | Word count, page count, processing time per document |
+| 📈 **Stats Endpoint** | Aggregated stats: totals, status counts, total words analysed |
+| 📑 **Pagination** | All list endpoints paginate with full metadata |
+| 🏥 **Health Checks** | `/health` verifies DB + Redis connectivity |
+| 🔍 **Request Tracing** | Per-request `X-Request-ID` propagated through logs |
+| 📝 **Structured Logs** | Request IDs, timing, severity — ready for Grafana/Loki |
+| 🚦 **Rate Limiting** | Per-route slowapi limits (auth, upload, default) |
+| 🐳 **Fully Dockerised** | Multi-stage build, non-root user, `docker compose up` is all you need |
+| 🌸 **Worker Dashboard** | Flower UI at `:5555` for real-time Celery monitoring |
+| 🧪 **CI/CD** | GitHub Actions: Ruff lint → pytest → Docker build |
+| 📖 **Auto Docs** | Swagger UI + ReDoc generated from Pydantic schemas |
+
+---
 
 ## 🏗️ Architecture
 
-```
-┌─────────────┐       ┌──────────────────┐       ┌─────────────┐
-│   Client     │──────▶│  FastAPI Server   │──────▶│ PostgreSQL  │
-│  (Browser)   │◀──────│  + Middleware     │◀──────│  Database   │
-└─────────────┘       │  + Error Handlers │       └─────────────┘
-                      │  + Request IDs    │
-                      └────────┬─────────┘
-                               │
-                        ┌──────▼──────┐
-                        │    Redis     │
-                        │  (Broker)    │
-                        └──────┬──────┘
-                               │
-      ┌─────────────┐  ┌──────▼──────┐  ┌─────────────┐
-      │   Flower     │  │   Celery     │──▶│  Groq API   │
-      │  Dashboard   │──│   Worker     │◀──│  (Llama 3)  │
-      │  :5555       │  └─────────────┘  └─────────────┘
-      └─────────────┘
+```mermaid
+flowchart LR
+    Client([👤 Client])
+    API[🚀 FastAPI<br/>Middleware + Handlers]
+    DB[(🐘 PostgreSQL)]
+    Redis[(🧠 Redis<br/>Broker)]
+    Worker[⚙️ Celery Worker]
+    Groq[🤖 Groq API<br/>Llama 3]
+    Flower[🌸 Flower<br/>:5555]
+
+    Client <-->|HTTPS + JWT| API
+    API <-->|SQLAlchemy async| DB
+    API -->|enqueue task| Redis
+    Redis -->|deliver task| Worker
+    Worker -->|status + results| DB
+    Worker -->|summarise| Groq
+    Flower -.monitors.-> Redis
+    Flower -.monitors.-> Worker
 ```
 
-### Processing Pipeline
+The API **never blocks on AI**. Uploads return `202 Accepted` immediately; workers do the heavy lifting, persist the result, and clients poll `GET /documents/{id}` for completion.
 
+---
+
+## 🔄 Processing Flow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant C as 👤 Client
+    participant A as 🚀 FastAPI
+    participant D as 🐘 Postgres
+    participant R as 🧠 Redis
+    participant W as ⚙️ Celery Worker
+    participant G as 🤖 Groq
+
+    C->>A: POST /documents/upload (PDF + JWT)
+    A->>A: Validate type + size<br/>Sniff magic bytes<br/>Stream to disk (UUID name)
+    A->>D: INSERT document (status=uploaded)
+    A->>R: enqueue process_document_task
+    A-->>C: 202 Accepted (doc_id)
+
+    R->>W: deliver task
+    W->>D: UPDATE status=processing
+    W->>W: Extract text (PyMuPDF)
+    W->>W: Count words / pages
+    W->>G: summarise(text)
+    G-->>W: summary
+    W->>D: UPDATE status=completed<br/>(text, summary, analytics)
+
+    C->>A: GET /documents/{id}
+    A->>D: SELECT document
+    A-->>C: 200 OK (summary + analytics)
 ```
-Upload → Validate → Save → Queue Task → Extract Text → Count Words/Pages → AI Summary → Done
-  │         │         │        │              │                │                │          │
- API       API       Disk    Redis          Worker          Worker           Groq       DB
+
+---
+
+## 🗂️ Data Model
+
+```mermaid
+erDiagram
+    USER ||--o{ DOCUMENT : owns
+    USER {
+        int id PK
+        string email UK
+        string hashed_password
+        string full_name
+        bool is_active
+        datetime created_at
+        datetime updated_at
+    }
+    DOCUMENT {
+        int id PK
+        int owner_id FK
+        string filename
+        string content_type
+        string file_path
+        int file_size_bytes
+        string status "uploaded|processing|completed|failed"
+        text extracted_text
+        text summary
+        int word_count
+        int page_count
+        float processing_time_seconds
+        datetime created_at
+        datetime updated_at
+    }
 ```
+
+Cascade-delete: dropping a user removes all their documents. Schema is managed by **Alembic migrations** — no `create_all` in production code.
+
+---
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) installed and running
-- A free [Groq API Key](https://console.groq.com) (for AI features)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- A free [Groq API key](https://console.groq.com)
 
-### 1. Clone the repository
+### 1. Clone
 
 ```bash
-git clone https://github.com/yourusername/document-intelligence-api.git
-cd document-intelligence-api
+git clone https://github.com/sick234/inteligenceapi.git
+cd inteligenceapi
 ```
 
-### 2. Configure environment variables
+### 2. Configure
 
 ```bash
 cp .env.example .env
-# Edit .env and add your GROQ_API_KEY
+# Edit .env — fill in GROQ_API_KEY and generate a SECRET_KEY:
+python -c "import secrets; print(secrets.token_urlsafe(64))"
 ```
 
-### 3. Run with Docker Compose
+### 3. Launch everything
 
 ```bash
-docker-compose up -d --build
+docker compose up -d --build
+docker compose exec api alembic upgrade head   # apply migrations
 ```
 
-This starts **5 services** automatically:
+### 4. Open
 
-| Service | Port | URL | Description |
-|---------|------|-----|-------------|
-| **API** | `8000` | http://localhost:8000 | FastAPI application server |
-| **Swagger Docs** | `8000` | http://localhost:8000/docs | Interactive API documentation |
-| **Flower** | `5555` | http://localhost:5555 | Celery task monitoring dashboard |
-| **PostgreSQL** | `5432` | — | Relational database |
-| **Redis** | `6379` | — | Message broker + cache |
+| Service | URL | What you'll see |
+|---------|-----|-----------------|
+| 🏠 **Landing** | http://localhost:8000 | Branded HTML landing page |
+| 📘 **Swagger UI** | http://localhost:8000/docs | Interactive API explorer |
+| 📗 **ReDoc** | http://localhost:8000/redoc | Reference-style docs |
+| 🌸 **Flower** | http://localhost:5555 | Live worker monitoring |
+| 🏥 **Health** | http://localhost:8000/health | DB + Redis status |
 
-### 4. Explore the API
-
-👉 **http://localhost:8000/docs** — Interactive Swagger UI  
-👉 **http://localhost:8000/redoc** — ReDoc documentation  
-👉 **http://localhost:5555** — Flower worker monitoring  
-👉 **http://localhost:8000/health** — Health check  
+---
 
 ## 📡 API Endpoints
 
 ### 🏥 System
-
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/` | API information and links |
-| `GET` | `/health` | Health check (DB + Redis status) |
+| `GET` | `/` | Branded landing page |
+| `GET` | `/health` | DB + Redis connectivity check |
 
 ### 🔐 Authentication
-
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/api/v1/auth/register` | Create a new user account |
-| `POST` | `/api/v1/auth/login` | Get a JWT access token |
-| `GET` | `/api/v1/auth/me` | Get current user profile |
+| `POST` | `/api/v1/auth/register` | Create a new user |
+| `POST` | `/api/v1/auth/login` | Obtain a JWT access token |
+| `GET` | `/api/v1/auth/me` | Current user profile |
 
 ### 📄 Documents
-
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/api/v1/documents/upload` | Upload a PDF or TXT file |
-| `GET` | `/api/v1/documents/` | List documents (paginated) |
-| `GET` | `/api/v1/documents/stats` | Get aggregate statistics |
-| `GET` | `/api/v1/documents/{id}` | Get document details + AI summary |
-| `DELETE` | `/api/v1/documents/{id}` | Delete a document |
+| `POST` | `/api/v1/documents/upload` | Upload a PDF or TXT (202 Accepted) |
+| `GET` | `/api/v1/documents/` | Paginated list of your documents |
+| `GET` | `/api/v1/documents/stats` | Aggregate statistics |
+| `GET` | `/api/v1/documents/{id}` | Full document + AI summary |
+| `DELETE` | `/api/v1/documents/{id}` | Remove document + file on disk |
+
+---
 
 ## 🧪 Usage Example
-
-### Register → Login → Upload → Get Summary
 
 ```bash
 # 1. Register
 curl -X POST http://localhost:8000/api/v1/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"email": "demo@example.com", "password": "SecurePass1", "full_name": "Demo User"}'
+  -d '{"email":"demo@example.com","password":"SecurePass1","full_name":"Demo"}'
 
-# 2. Login
+# 2. Login (OAuth2 password flow)
 TOKEN=$(curl -s -X POST http://localhost:8000/api/v1/auth/login \
   -d "username=demo@example.com&password=SecurePass1" | jq -r '.access_token')
 
-# 3. Upload a document
+# 3. Upload a PDF
 curl -X POST http://localhost:8000/api/v1/documents/upload \
   -H "Authorization: Bearer $TOKEN" \
-  -F "file=@document.pdf"
+  -F "file=@paper.pdf"
+# → 202 Accepted, { "id": 1, "status": "uploaded", ... }
 
-# 4. Check the AI-generated summary
+# 4. Poll for the AI summary
 curl http://localhost:8000/api/v1/documents/1 \
-  -H "Authorization: Bearer $TOKEN" | jq '.summary'
+  -H "Authorization: Bearer $TOKEN" | jq '{status, summary, word_count, page_count}'
 
-# 5. Get your stats
+# 5. Dashboard stats
 curl http://localhost:8000/api/v1/documents/stats \
   -H "Authorization: Bearer $TOKEN"
 ```
 
+---
+
+## 🔐 Security Hardening
+
+This isn't a toy demo — the upload path is defended in depth against common attacks.
+
+| Threat | Mitigation | Where |
+|--------|-----------|-------|
+| **Weak secrets** | `SECRET_KEY` is required, rejects known weak defaults, enforces ≥32 chars | [`app/core/config.py`](app/core/config.py) |
+| **Path traversal** | Files stored under random UUIDs + resolved-path containment check | [`app/api/documents.py`](app/api/documents.py) |
+| **Content-type spoofing** | Magic-byte sniffing (`%PDF-`) reconciled against declared type | [`app/api/documents.py`](app/api/documents.py) |
+| **Upload-size DoS** | Early `Content-Length` reject + streaming chunk counter | [`app/api/documents.py`](app/api/documents.py) |
+| **Broken auth** | bcrypt hashing, JWT with expiry, password strength validator | [`app/api/auth.py`](app/api/auth.py) |
+| **IDOR (cross-user access)** | Every query filters by `owner_id = current_user.id` | [`app/api/documents.py`](app/api/documents.py) |
+| **Brute force / abuse** | slowapi rate limits per route (auth `5/min`, upload `10/min`) | [`app/core/limiter.py`](app/core/limiter.py) |
+| **Missing security headers** | `SecurityHeadersMiddleware` (CSP, X-Frame, X-Content-Type, Referrer) | [`app/core/middleware.py`](app/core/middleware.py) |
+| **Unbounded schema drift** | Alembic migrations are the single source of truth (no `create_all`) | [`alembic/`](alembic/) |
+| **Secret leakage in logs** | Structured logger never logs tokens or request bodies | [`app/core/logging.py`](app/core/logging.py) |
+
+See [SECURITY.md](SECURITY.md) for reporting vulnerabilities.
+
+---
+
 ## 📁 Project Structure
 
 ```
-document-intelligence-api/
+inteligenceapi/
 ├── .github/
-│   └── workflows/
-│       └── ci.yml                 # GitHub Actions CI/CD pipeline
+│   ├── workflows/ci.yml              # Lint → Test → Docker build
+│   ├── ISSUE_TEMPLATE/               # Bug + feature templates
+│   └── PULL_REQUEST_TEMPLATE.md
+├── alembic/                          # Database migrations
 ├── app/
-│   ├── api/                       # Route handlers (controllers)
-│   │   ├── auth.py                # JWT auth (register, login, me)
-│   │   ├── documents.py           # Document CRUD + pagination
-│   │   └── health.py              # Health check endpoint
-│   ├── core/                      # Core infrastructure
-│   │   ├── config.py              # Pydantic Settings (all config)
-│   │   ├── database.py            # Async SQLAlchemy engine
-│   │   ├── exceptions.py          # Global error handlers
-│   │   ├── logging.py             # Structured logging setup
-│   │   └── middleware.py          # Request ID + timing middleware
-│   ├── models/                    # SQLAlchemy ORM models
-│   │   ├── user.py                # User table
-│   │   └── document.py            # Document table + analytics
-│   ├── schemas/                   # Pydantic validation schemas
-│   │   ├── user.py                # User schemas + password validation
-│   │   └── document.py            # Document + pagination schemas
-│   ├── services/                  # Business logic layer
-│   │   └── ai_service.py          # Groq integration (retry + logging)
-│   ├── worker/                    # Background processing
-│   │   ├── celery_app.py          # Celery configuration
-│   │   └── tasks.py               # Document processing pipeline
-│   └── main.py                    # FastAPI app factory
-├── tests/                         # Test suite
-│   ├── conftest.py                # Shared fixtures
-│   ├── test_auth.py               # Auth endpoint tests
-│   └── test_documents.py          # Document endpoint tests
-├── .env.example                   # Environment variable template
-├── .gitignore
-├── docker-compose.yml             # Multi-service orchestration
-├── Dockerfile                     # Multi-stage production build
-├── LICENSE                        # MIT License
-├── Makefile                       # Development shortcuts
-├── pyproject.toml                 # Modern Python project config
-├── README.md
-└── requirements.txt               # Pinned dependencies
+│   ├── api/                          # Route handlers
+│   │   ├── auth.py                   # register · login · me
+│   │   ├── documents.py              # upload · list · get · delete · stats
+│   │   └── health.py                 # /health
+│   ├── core/                         # Infrastructure
+│   │   ├── config.py                 # Pydantic Settings (validated)
+│   │   ├── database.py               # Async SQLAlchemy engine
+│   │   ├── exceptions.py             # Global error handlers
+│   │   ├── limiter.py                # slowapi rate limiter
+│   │   ├── logging.py                # Structured logging
+│   │   └── middleware.py             # Request-ID · timing · sec-headers
+│   ├── models/                       # SQLAlchemy ORM (User, Document)
+│   ├── schemas/                      # Pydantic v2 validation
+│   ├── services/ai_service.py        # Groq client (retry + logging)
+│   ├── worker/                       # Celery background processing
+│   │   ├── celery_app.py
+│   │   └── tasks.py                  # Extract → count → summarise → save
+│   └── main.py                       # App factory + lifespan
+├── tests/                            # pytest async suite
+├── docker-compose.yml                # api · worker · db · redis · flower
+├── Dockerfile                        # Multi-stage, non-root
+├── Makefile                          # make dev · test · logs · clean
+├── SECURITY.md                       # Vulnerability reporting
+├── CONTRIBUTING.md                   # Contribution guide
+└── README.md
 ```
+
+---
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| **API Framework** | FastAPI | High-performance async web framework |
-| **ORM** | SQLAlchemy 2.0 | Async database operations (asyncpg driver) |
-| **Validation** | Pydantic v2 | Request/response data validation |
-| **Auth** | python-jose + passlib | JWT tokens + bcrypt password hashing |
-| **Task Queue** | Celery | Distributed background job processing |
-| **Broker** | Redis | Message broker + result backend |
-| **Database** | PostgreSQL 15 | Persistent relational storage |
-| **AI** | Groq (Llama 3) | Free, ultra-fast text summarization |
-| **PDF Processing** | PyMuPDF (fitz) | PDF text extraction |
-| **Monitoring** | Flower | Real-time Celery task dashboard |
-| **Containerization** | Docker Compose | Multi-service orchestration |
-| **CI/CD** | GitHub Actions | Automated lint, test, build pipeline |
-| **Linting** | Ruff | Fast Python linter |
-| **Testing** | pytest | Test framework with async support |
+| Layer | Technology | Why |
+|-------|-----------|-----|
+| **API** | FastAPI | Async, auto-docs, Pydantic native |
+| **ORM** | SQLAlchemy 2.0 (asyncpg) | Modern async patterns |
+| **Validation** | Pydantic v2 | Fast, strict, declarative |
+| **Auth** | python-jose + passlib[bcrypt] | Standards-compliant JWT |
+| **Queue** | Celery 5 | Battle-tested distributed tasks |
+| **Broker** | Redis 7 | Low-latency, persistent |
+| **DB** | PostgreSQL 15 | ACID + JSONB + full-text ready |
+| **AI** | Groq (Llama 3) | Ultra-fast inference, free tier |
+| **PDF** | PyMuPDF (fitz) | Fastest pure-Python PDF parser |
+| **Migrations** | Alembic | Single source of schema truth |
+| **Monitoring** | Flower | Real-time Celery dashboard |
+| **Containers** | Docker Compose | One-command full stack |
+| **CI** | GitHub Actions | Lint · test · docker build |
+| **Lint** | Ruff | 10-100× faster than flake8 |
+| **Tests** | pytest + pytest-asyncio | Async-native test runner |
+
+---
 
 ## 🔧 Development
 
-### Common commands (with Makefile)
+### Common commands
 
 ```bash
-make dev          # Build and start everything
+make dev          # Build + start everything
 make logs         # Follow API logs
-make logs-worker  # Follow worker logs
-make test         # Run test suite
-make lint         # Run code linter
-make down         # Stop all services
-make clean        # Remove everything (containers + volumes)
+make logs-worker  # Follow Celery logs
+make test         # Run pytest suite
+make lint         # Ruff linter
+make down         # Stop services
+make clean        # Stop + wipe volumes
 ```
 
-### Without Make
+### Raw Docker Compose
 
 ```bash
-docker-compose up -d --build      # Start
-docker-compose logs -f api        # API logs
-docker-compose exec api pytest -v # Tests
-docker-compose down               # Stop
+docker compose up -d --build
+docker compose exec api alembic upgrade head
+docker compose exec api pytest -v
+docker compose logs -f api worker
+docker compose down
 ```
 
-### Environment Variables
+### Environment variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DATABASE_URL` | *required* | PostgreSQL connection string |
-| `REDIS_URL` | *required* | Redis connection string |
-| `GROQ_API_KEY` | `""` | Groq API key for AI features |
-| `SECRET_KEY` | `"super_secret..."` | JWT signing key |
-| `MAX_UPLOAD_SIZE_MB` | `20` | Maximum upload file size |
-| `GROQ_MODEL` | `"llama3-8b-8192"` | AI model to use |
-| `DEBUG` | `false` | Enable debug logging |
-| `CORS_ORIGINS` | `["*"]` | Allowed CORS origins |
+| Variable | Required | Default | Description |
+|----------|:---:|---------|-------------|
+| `DATABASE_URL` | ✅ | — | PostgreSQL async DSN |
+| `REDIS_URL` | ✅ | — | Redis broker URL |
+| `SECRET_KEY` | ✅ | — | JWT signing key (≥32 chars, no weak defaults) |
+| `GROQ_API_KEY` | ⚠️ | `""` | Required for AI summarisation |
+| `GROQ_MODEL` | | `llama3-8b-8192` | Groq model name |
+| `MAX_UPLOAD_SIZE_MB` | | `20` | Max upload size |
+| `RATE_LIMIT_UPLOAD` | | `10/minute` | Upload rate limit |
+| `DEBUG` | | `false` | Verbose logging |
+| `CORS_ORIGINS` | | `["*"]` | Allowed origins list |
+
+Config is validated at startup — the app refuses to boot with a weak `SECRET_KEY` or missing DSN.
+
+---
+
+## 🧪 CI / CD
+
+Every push and PR runs three jobs in sequence:
+
+```mermaid
+flowchart LR
+    A[🔍 Ruff Lint] --> B[🧪 pytest<br/>+ Postgres + Redis services]
+    B --> C[🐳 Docker Build<br/>+ smoke run]
+    C --> D((✅ Ready))
+```
+
+Check it live: [Actions tab](https://github.com/sick234/inteligenceapi/actions).
+
+---
 
 ## 📝 License
 
-This project is licensed under the [MIT License](LICENSE).
+Released under the [MIT License](LICENSE) — free for personal and commercial use.
+
+---
+
+<div align="center">
+
+**Built with ❤️ for the async Python ecosystem.**
+
+If this project helped you, consider giving it a ⭐ on [GitHub](https://github.com/sick234/inteligenceapi).
+
+</div>
